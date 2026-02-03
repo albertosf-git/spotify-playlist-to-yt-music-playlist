@@ -66,8 +66,19 @@
                     <span class="text-zinc-500 text-xs font-mono uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-compact-disc"></i> Playlist Detectada</span>
                     <h3 id="playlistTitle" class="text-3xl md:text-4xl font-bold text-white tracking-tight mt-1"></h3>
                 </div>
-                <div id="contador" class="text-xs font-mono bg-zinc-900 text-zinc-400 px-3 py-1.5 rounded border border-zinc-800 uppercase"></div>
+                
+                <div class="flex items-center gap-4">
+                    <button onclick="generarPlaylistYoutube()" id="btnExportar" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg flex items-center gap-2">
+                        <i class="fa-brands fa-youtube text-lg"></i> <span>EXPORTAR TODO</span>
+                    </button>
+                    <div id="contador" class="text-xs font-mono bg-zinc-900 text-zinc-400 px-3 py-2 rounded border border-zinc-800 uppercase h-full flex items-center"></div>
+                </div>
             </div>
+
+            <div id="progresoExport" class="hidden w-full bg-zinc-900 rounded-full h-2.5 mb-2 border border-zinc-800 overflow-hidden">
+                <div id="barraProgreso" class="bg-red-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="estadoExport" class="hidden text-xs text-zinc-500 font-mono mb-6 text-center animate-pulse">Iniciando...</p>
 
             <div class="bg-zinc-900/40 rounded-2xl border border-white/5 backdrop-blur-sm overflow-hidden shadow-2xl">
                 <div class="grid grid-cols-12 text-xs text-zinc-500 uppercase font-bold tracking-wider p-5 border-b border-white/5 bg-zinc-900/50">
@@ -82,6 +93,9 @@
     </main>
 
     <script>
+        // VARIABLE GLOBAL para guardar las canciones detectadas
+        let cancionesGlobales = [];
+
         async function procesarPlaylist() {
             const input = document.getElementById('urlInput');
             const btn = document.getElementById('btn');
@@ -89,6 +103,10 @@
             const div = document.getElementById('resultado');
             const titleDisplay = document.getElementById('playlistTitle');
             const contador = document.getElementById('contador');
+            // Resetear UI de exportación si se busca otra lista
+            document.getElementById('progresoExport').classList.add('hidden');
+            document.getElementById('estadoExport').classList.add('hidden');
+            document.getElementById('btnExportar').disabled = false;
 
             if (!input.value) {
                 input.classList.add('animate-pulse');
@@ -103,7 +121,7 @@
             div.classList.add('hidden');
 
             try {
-                // Scraping de Spotify (Backend existente)
+                // Scraping de Spotify
                 const resp = await fetch('/api/spotify', {
                     method: 'POST',
                     body: JSON.stringify({ url: input.value }),
@@ -113,6 +131,9 @@
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error);
 
+                // [IMPORTANTE] Guardamos los datos para poder exportarlos luego
+                cancionesGlobales = data.tracks;
+
                 titleDisplay.innerText = data.meta.title;
                 contador.innerText = `${data.meta.count} TRACKS`;
 
@@ -120,14 +141,13 @@
                     const li = document.createElement('li');
                     li.className = "grid grid-cols-12 p-4 items-center hover:bg-white/5 transition duration-200 group";
                     
-                    // BOTÓN SIMPLE: Llama a la función directa
                     li.innerHTML = `
                         <div class="col-span-1 text-center text-zinc-600 font-mono text-xs group-hover:text-white">${index + 1}</div>
                         <div class="col-span-6 font-medium text-zinc-200 truncate pr-4 text-base">${track.titulo}</div>
                         <div class="col-span-4 text-zinc-400 text-sm truncate pr-4 group-hover:text-zinc-300">${track.artista}</div>
                         <div class="col-span-1 flex justify-center">
-                            <button onclick="abrirGoogleLucky('${track.titulo}', '${track.artista}')" 
-                               class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-white hover:text-red-600 hover:scale-110 shadow-lg transition-all duration-300">
+                            <button onclick="abrirGoogleLucky('${track.titulo.replace(/'/g, "\\'")}', '${track.artista.replace(/'/g, "\\'")}')" 
+                               class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white hover:bg-red-600 hover:scale-110 shadow-lg transition-all duration-300">
                                 <i class="fa-solid fa-play text-xs ml-0.5"></i>
                             </button>
                         </div>
@@ -138,22 +158,108 @@
                 div.classList.remove('hidden');
 
             } catch (e) {
-                alert("Error al leer la playlist. Verifica el enlace.");
+                alert("Error al leer la playlist: " + e.message);
             } finally {
                 btn.innerHTML = originalBtnContent;
                 btn.disabled = false;
             }
         }
 
-        // --- LA FUNCIÓN DE GOOGLE LUCKY ---
+        // --- FUNCIÓN DE EXPORTACIÓN MASIVA ---
+        async function generarPlaylistYoutube() {
+            if (cancionesGlobales.length === 0) return;
+
+            const btn = document.getElementById('btnExportar');
+            const barraContainer = document.getElementById('progresoExport');
+            const barra = document.getElementById('barraProgreso');
+            const estado = document.getElementById('estadoExport');
+
+            // Preparar UI
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            barraContainer.classList.remove('hidden');
+            estado.classList.remove('hidden');
+
+            const idsEncontrados = [];
+            
+            // Usamos TU propio backend proxy para evitar CORS
+            const API_PROXY = "/api/search?q=";
+
+            for (let i = 0; i < cancionesGlobales.length; i++) {
+                const track = cancionesGlobales[i];
+                
+                // Actualizar barra de progreso
+                const porcentaje = Math.round(((i + 1) / cancionesGlobales.length) * 100);
+                barra.style.width = `${porcentaje}%`;
+                estado.innerText = `Buscando (${i + 1}/${cancionesGlobales.length}): ${track.titulo.substring(0, 20)}...`;
+
+                try {
+                    // Llamada a tu función Cloudflare
+                    const res = await fetch(API_PROXY + encodeURIComponent(`${track.titulo} ${track.artista}`));
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        // Piped devuelve 'items'. Buscamos el tipo 'stream'
+                        if (data.items) {
+                            const video = data.items.find(item => item.type === 'stream');
+                            if (video) {
+                                // La URL de Piped es relativa (/watch?v=ID)
+                                const id = video.url.split('v=')[1];
+                                if (id) idsEncontrados.push(id);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Saltando canción ${i}:`, e);
+                }
+
+                // Pequeño respiro de 50ms para no saturar tu propio worker
+                await new Promise(r => setTimeout(r, 50)); 
+            }
+
+            estado.innerText = `¡Listo! Generando playlist con ${idsEncontrados.length} canciones...`;
+            
+            // DIVIDIR EN LOTES DE 50 (Límite de URL de YouTube)
+            const chunkSize = 50;
+            const totalChunks = Math.ceil(idsEncontrados.length / chunkSize);
+
+            if (idsEncontrados.length === 0) {
+                 estado.innerText = "No se encontraron canciones válidas.";
+                 setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                 }, 2000);
+                 return;
+            }
+
+            for (let i = 0; i < idsEncontrados.length; i += chunkSize) {
+                const chunk = idsEncontrados.slice(i, i + chunkSize);
+                // URL Mágica de YouTube
+                const url = `http://www.youtube.com/watch_videos?video_ids=${chunk.join(',')}`;
+                
+                // Abrir
+                if (totalChunks > 1) {
+                    estado.innerText = `Abriendo parte ${Math.floor(i/chunkSize) + 1} de ${totalChunks}... (Revisa bloqueador de popups)`;
+                }
+                
+                // Retraso escalonado para que el navegador no bloquee múltiples pestañas
+                setTimeout(() => {
+                    window.open(url, '_blank');
+                }, i * 20); 
+            }
+
+            // Restaurar botón al final
+            setTimeout(() => {
+                estado.innerText = "¡Proceso finalizado!";
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }, 3000);
+        }
+
+        // --- FUNCIÓN INDIVIDUAL (Original) ---
         function abrirGoogleLucky(titulo, artista) {
-            // Construimos la búsqueda restringida a youtube.com
             const query = `site:youtube.com ${titulo} ${artista}`;
-            
-            // Usamos el parámetro btnI (I'm Feeling Lucky)
             const luckyUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&btnI`;
-            
-            // Abrimos en nueva pestaña
             window.open(luckyUrl, '_blank');
         }
     </script>
