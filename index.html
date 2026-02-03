@@ -3,148 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playlist Converter | Pro</title>
+    <title>MonoBridge | Spotify to YT</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        zinc: { 850: '#1f1f22', 950: '#0c0c0e' } // Colores custom más oscuros
+                        zinc: { 850: '#1f1f22', 950: '#09090b' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
         }
     </script>
+
     <style>
-        /* Scrollbar fina y elegante */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0c0c0e; }
+        /* Estilos base y scrollbar */
+        body { background-color: #09090b; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     </style>
 </head>
-<body class="bg-zinc-950 text-gray-200 min-h-screen flex flex-col items-center antialiased selection:bg-white selection:text-black">
+<body class="text-gray-200 min-h-screen flex flex-col items-center antialiased selection:bg-white selection:text-black">
 
-    <header class="w-full py-8 px-6 border-b border-white/5 flex justify-between items-center max-w-5xl">
-        <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-white rounded-full"></div>
-            <h1 class="text-lg font-semibold tracking-tight text-white">MonoBridge</h1>
+    <header class="w-full py-6 px-6 border-b border-white/5 flex justify-between items-center max-w-6xl z-10 bg-zinc-950/80 backdrop-blur-md sticky top-0">
+        <div class="flex items-center gap-3">
+            <div class="w-2 h-8 bg-gradient-to-b from-white to-zinc-600 rounded-full"></div>
+            <h1 class="text-xl font-bold tracking-tight text-white">MonoBridge</h1>
         </div>
-        <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">v1.0.0 Stable</span>
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">System Online</span>
+        </div>
     </header>
 
-    <main class="w-full max-w-3xl flex-1 flex flex-col items-center pt-20 px-4">
+    <main class="w-full max-w-4xl flex-1 flex flex-col items-center pt-20 px-4 pb-20">
         
-        <div class="text-center mb-12 space-y-4">
-            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tighter">
-                Tu música, <span class="text-zinc-500">donde quieras.</span>
+        <div class="w-full max-w-2xl text-center space-y-8 mb-16">
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
+                Mueve tu música <br> <span class="text-zinc-600">a la velocidad de la luz.</span>
             </h2>
-            <p class="text-zinc-400 text-lg max-w-md mx-auto font-light">
-                Extrae metadatos de Spotify al instante. Sin logins, sin esperas.
-            </p>
-        </div>
-
-        <div class="w-full relative group">
-            <div class="absolute -inset-0.5 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg blur opacity-30 group-hover:opacity-75 transition duration-500"></div>
-            <div class="relative flex bg-black rounded-lg p-1 items-center border border-zinc-800">
-                <input id="urlInput" type="text" 
-                    placeholder="https://open.spotify.com/playlist/..." 
-                    class="w-full bg-transparent text-white px-4 py-3 outline-none placeholder-zinc-600 font-mono text-sm"
-                >
-                <button onclick="buscarCanciones()" id="btn"
-                    class="bg-white text-black hover:bg-zinc-200 px-6 py-2 rounded-md font-medium text-sm transition-all duration-200 flex items-center gap-2">
-                    <span>Analizar</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
-            </div>
-        </div>
-
-        <div id="resultado" class="w-full mt-16 hidden opacity-0 transition-opacity duration-700 ease-out">
             
-            <div class="flex justify-between items-end mb-4 border-b border-white/10 pb-2">
-                <h3 class="text-zinc-100 font-medium">Contenido detectado</h3>
-                <span id="contador" class="text-xs font-mono bg-zinc-900 text-zinc-400 px-2 py-1 rounded border border-zinc-800">
-                    0 TRACKS
-                </span>
+            <div class="relative group mx-auto w-full">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-700 rounded-xl blur opacity-20 group-hover:opacity-50 transition duration-700"></div>
+                <div class="relative flex bg-zinc-900 rounded-xl p-1.5 items-center border border-zinc-800 shadow-2xl">
+                    <div class="pl-4 text-zinc-500"><i class="fa-brands fa-spotify text-xl"></i></div>
+                    <input id="urlInput" type="text" 
+                        placeholder="Pega el enlace de la playlist aquí..." 
+                        class="w-full bg-transparent text-white px-4 py-3 outline-none placeholder-zinc-600 font-medium text-sm"
+                        autocomplete="off"
+                    >
+                    <button onclick="buscarCanciones()" id="btn"
+                        class="bg-white text-black hover:bg-zinc-200 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center gap-2 shadow-lg shadow-white/5">
+                        <span>Procesar</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultado" class="w-full hidden animate-fade-in">
+            
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-6 border-b border-white/10 pb-6 gap-4">
+                <div class="flex flex-col gap-1">
+                    <span class="text-zinc-500 text-xs font-mono uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-compact-disc"></i> Playlist Detectada
+                    </span>
+                    <h3 id="playlistTitle" class="text-3xl md:text-4xl font-bold text-white tracking-tight mt-1">
+                        </h3>
+                </div>
+                <div id="contador" class="text-xs font-mono bg-zinc-900 text-zinc-400 px-3 py-1.5 rounded border border-zinc-800 uppercase">
+                    </div>
             </div>
 
-            <div class="bg-zinc-900/30 rounded-xl border border-white/5 backdrop-blur-sm overflow-hidden">
-                <div class="grid grid-cols-12 text-xs text-zinc-500 uppercase font-bold tracking-wider p-4 border-b border-white/5">
+            <div class="bg-zinc-900/40 rounded-2xl border border-white/5 backdrop-blur-sm overflow-hidden shadow-2xl">
+                <div class="grid grid-cols-12 text-xs text-zinc-500 uppercase font-bold tracking-wider p-5 border-b border-white/5 bg-zinc-900/50">
                     <div class="col-span-1 text-center">#</div>
                     <div class="col-span-6">Título</div>
-                    <div class="col-span-5">Artista</div>
+                    <div class="col-span-4">Artista</div>
+                    <div class="col-span-1 text-center">Play</div>
                 </div>
+                
                 <ul id="lista" class="divide-y divide-white/5">
                     </ul>
-            </div>
-            
-            <div class="mt-4 text-center">
-                 <p class="text-zinc-600 text-xs">Datos extraídos vía Public Embed Parser</p>
             </div>
         </div>
 
     </main>
 
-    <footer class="py-8 text-zinc-600 text-xs font-mono">
-        © 2026 MonoBridge Systems. All rights reserved.
+    <footer class="py-8 text-center text-zinc-700 text-xs font-mono border-t border-white/5 w-full">
+        <p>POWERED BY CLOUDFLARE WORKERS & NO-API MAGIC</p>
     </footer>
 
     <script>
         async function buscarCanciones() {
-            const input = document.getElementById('urlInput').value;
+            const input = document.getElementById('urlInput');
             const btn = document.getElementById('btn');
             const lista = document.getElementById('lista');
             const div = document.getElementById('resultado');
+            const titleDisplay = document.getElementById('playlistTitle');
             const contador = document.getElementById('contador');
 
-            if (!input) return; // No alert molesto, simplemente no hace nada
+            if (!input.value) {
+                input.classList.add('animate-pulse');
+                setTimeout(() => input.classList.remove('animate-pulse'), 500);
+                return;
+            }
 
-            // Estado de carga elegante
-            btn.innerHTML = '<svg class="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            // UI Loading State
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-base"></i>';
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
             btn.disabled = true;
+            
+            // Reset UI
             lista.innerHTML = "";
             div.classList.add('hidden');
-            div.classList.remove('opacity-100');
 
             try {
+                // Petición al backend
                 const resp = await fetch('/api/spotify', {
                     method: 'POST',
-                    body: JSON.stringify({ url: input }),
+                    body: JSON.stringify({ url: input.value }),
                     headers: { 'Content-Type': 'application/json' }
                 });
 
-                const datos = await resp.json();
+                const data = await resp.json();
 
-                if (datos.error) throw new Error(datos.error);
+                if (data.error) throw new Error(data.error);
 
-                // Actualizar contador
-                contador.innerText = `${datos.length} TRACKS`;
+                // 1. Pintar Cabecera
+                titleDisplay.innerText = data.meta.title;
+                contador.innerText = `${data.meta.count} TRACKS`;
 
-                // Renderizar lista con estilo
-                datos.forEach((track, index) => {
+                // 2. Pintar Canciones
+                data.tracks.forEach((track, index) => {
+                    // TRUCO DE REDIRECCIÓN AUTOMÁTICA
+                    // site:youtube.com fuerza que busque vídeos
+                    // !ducky fuerza el "Voy a tener suerte" (primer resultado)
+                    const searchQuery = `site:youtube.com ${track.titulo} ${track.artista} official audio`;
+                    const magicLink = `https://duckduckgo.com/?q=!ducky+${encodeURIComponent(searchQuery)}`;
+
                     const li = document.createElement('li');
-                    li.className = "grid grid-cols-12 p-4 items-center hover:bg-white/5 transition duration-150 group cursor-default";
+                    li.className = "grid grid-cols-12 p-4 items-center hover:bg-white/5 transition duration-200 group relative";
+                    
                     li.innerHTML = `
-                        <div class="col-span-1 text-center text-zinc-600 font-mono text-xs group-hover:text-zinc-400">${index + 1}</div>
-                        <div class="col-span-6 font-medium text-zinc-200 truncate pr-4">${track.titulo}</div>
-                        <div class="col-span-5 text-zinc-400 text-sm truncate">${track.artista}</div>
+                        <div class="col-span-1 text-center text-zinc-600 font-mono text-xs group-hover:text-white transition">${index + 1}</div>
+                        
+                        <div class="col-span-6 font-medium text-zinc-200 truncate pr-4 flex items-center gap-3">
+                            <span class="text-base">${track.titulo}</span>
+                        </div>
+                        
+                        <div class="col-span-4 text-zinc-400 text-sm truncate pr-4 group-hover:text-zinc-300 transition">${track.artista}</div>
+                        
+                        <div class="col-span-1 flex justify-center">
+                            <a href="${magicLink}" target="_blank" 
+                               class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 hover:bg-white hover:text-black hover:scale-110 hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all duration-300 transform"
+                               title="Reproducir Automáticamente">
+                                <i class="fa-solid fa-play text-xs ml-0.5"></i>
+                            </a>
+                        </div>
                     `;
                     lista.appendChild(li);
                 });
 
-                // Mostrar resultados con animación fade-in
+                // Mostrar resultado
                 div.classList.remove('hidden');
-                // Pequeño timeout para permitir que el DOM renderice antes de la opacidad
-                setTimeout(() => div.classList.add('opacity-100'), 50);
+                // Scroll suave hacia los resultados
+                div.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch (e) {
+                alert("Ops! No pudimos leer esa playlist. Asegúrate de que es pública y el enlace es correcto.");
                 console.error(e);
-                alert("Error al procesar la playlist. Verifica el enlace.");
             } finally {
-                btn.innerHTML = '<span>Analizar</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+                // Restaurar botón
+                btn.innerHTML = originalBtnContent;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
                 btn.disabled = false;
             }
         }
