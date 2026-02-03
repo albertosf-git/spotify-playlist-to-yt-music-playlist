@@ -3,45 +3,52 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const q = url.searchParams.get('q');
 
-  if (!q) return new Response(JSON.stringify({ error: "Falta término de búsqueda" }), { status: 400 });
+  if (!q) return new Response(JSON.stringify({ error: "Falta término" }), { status: 400 });
 
-  // Lista de instancias de Piped (Failover automático)
-  // Si Kavin cae, usa Otter, etc.
-  const apis = [
-    "https://pipedapi.kavin.rocks",
-    "https://api.piped.otter.sh",
-    "https://pipedapi.adminforge.de",
-    "https://pipedapi.drgns.space"
+  // LISTA DE INSTANCIAS INVIDIOUS (No Piped)
+  // Estas suelen ser más robustas contra bloqueos de Cloudflare
+  const instancias = [
+    "https://yewtu.be",             // Holanda (Muy estable)
+    "https://vid.puffyan.us",       // USA
+    "https://invidious.drgns.space",// USA
+    "https://inv.tux.pizza",        // USA
+    "https://invidious.flokinet.to",// Rumanía
+    "https://invidious.privacydev.net" // Francia
   ];
 
-  for (const apiBase of apis) {
+  const fakeUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+  for (const base of instancias) {
     try {
-      // Tu servidor hace la petición (aquí no existe el bloqueo CORS)
-      const targetUrl = `${apiBase}/streams/search?q=${encodeURIComponent(q)}`;
+      // Invidious usa esta ruta, no /streams/search
+      const targetUrl = `${base}/api/v1/search?q=${encodeURIComponent(q)}&type=video`;
       
       const resp = await fetch(targetUrl, {
         headers: { 
-            'User-Agent': 'Mozilla/5.0 (Compatible; MonoBridge/1.0)',
-            'Accept': 'application/json'
+            'User-Agent': fakeUserAgent
         }
       });
 
       if (resp.ok) {
         const data = await resp.json();
-        // Devolvemos los datos limpios a tu frontend
-        return new Response(JSON.stringify(data), {
-          headers: { 
-            'Content-Type': 'application/json',
-            // Cacheamos la respuesta 1 hora para ir más rápido si buscas lo mismo
-            'Cache-Control': 'public, max-age=3600' 
-          }
-        });
+        
+        // Invidious devuelve un Array directo
+        if (Array.isArray(data) && data.length > 0) {
+          const videoId = data[0].videoId;
+          
+          // Devolvemos DIRECTAMENTE el ID, sin complicaciones
+          return new Response(JSON.stringify({ id: videoId }), {
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'public, max-age=86400' 
+            }
+          });
+        }
       }
     } catch (e) {
-      // Si esta API falla, el bucle continúa silenciosamente a la siguiente
       continue;
     }
   }
 
-  return new Response(JSON.stringify({ error: "No se pudo conectar con ninguna API de música." }), { status: 502 });
+  return new Response(JSON.stringify({ error: "No se encontró en ninguna instancia." }), { status: 502 });
 }
