@@ -1,29 +1,96 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertidor de Playlist</title>
+    <title>Playlist Converter | Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background-color: #000; color: white; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        zinc: { 850: '#1f1f22', 950: '#0c0c0e' } // Colores custom más oscuros
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Scrollbar fina y elegante */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0c0c0e; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
+<body class="bg-zinc-950 text-gray-200 min-h-screen flex flex-col items-center antialiased selection:bg-white selection:text-black">
 
-    <h1 class="text-4xl font-bold mb-8 text-green-500">Spotify a YouTube</h1>
+    <header class="w-full py-8 px-6 border-b border-white/5 flex justify-between items-center max-w-5xl">
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-white rounded-full"></div>
+            <h1 class="text-lg font-semibold tracking-tight text-white">MonoBridge</h1>
+        </div>
+        <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">v1.0.0 Stable</span>
+    </header>
 
-    <div class="w-full max-w-xl flex gap-2 mb-8">
-        <input id="urlInput" type="text" placeholder="Pega el link de la playlist aquí..." 
-            class="flex-1 p-3 rounded bg-gray-900 border border-gray-700 focus:border-green-500 outline-none">
-        <button onclick="buscarCanciones()" id="btn"
-            class="bg-green-600 hover:bg-green-700 px-6 rounded font-bold transition">
-            Buscar
-        </button>
-    </div>
+    <main class="w-full max-w-3xl flex-1 flex flex-col items-center pt-20 px-4">
+        
+        <div class="text-center mb-12 space-y-4">
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tighter">
+                Tu música, <span class="text-zinc-500">donde quieras.</span>
+            </h2>
+            <p class="text-zinc-400 text-lg max-w-md mx-auto font-light">
+                Extrae metadatos de Spotify al instante. Sin logins, sin esperas.
+            </p>
+        </div>
 
-    <div id="resultado" class="w-full max-w-xl hidden">
-        <h2 class="text-xl mb-4 text-gray-400">Canciones detectadas:</h2>
-        <ul id="lista" class="space-y-2"></ul>
-    </div>
+        <div class="w-full relative group">
+            <div class="absolute -inset-0.5 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-lg blur opacity-30 group-hover:opacity-75 transition duration-500"></div>
+            <div class="relative flex bg-black rounded-lg p-1 items-center border border-zinc-800">
+                <input id="urlInput" type="text" 
+                    placeholder="https://open.spotify.com/playlist/..." 
+                    class="w-full bg-transparent text-white px-4 py-3 outline-none placeholder-zinc-600 font-mono text-sm"
+                >
+                <button onclick="buscarCanciones()" id="btn"
+                    class="bg-white text-black hover:bg-zinc-200 px-6 py-2 rounded-md font-medium text-sm transition-all duration-200 flex items-center gap-2">
+                    <span>Analizar</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="resultado" class="w-full mt-16 hidden opacity-0 transition-opacity duration-700 ease-out">
+            
+            <div class="flex justify-between items-end mb-4 border-b border-white/10 pb-2">
+                <h3 class="text-zinc-100 font-medium">Contenido detectado</h3>
+                <span id="contador" class="text-xs font-mono bg-zinc-900 text-zinc-400 px-2 py-1 rounded border border-zinc-800">
+                    0 TRACKS
+                </span>
+            </div>
+
+            <div class="bg-zinc-900/30 rounded-xl border border-white/5 backdrop-blur-sm overflow-hidden">
+                <div class="grid grid-cols-12 text-xs text-zinc-500 uppercase font-bold tracking-wider p-4 border-b border-white/5">
+                    <div class="col-span-1 text-center">#</div>
+                    <div class="col-span-6">Título</div>
+                    <div class="col-span-5">Artista</div>
+                </div>
+                <ul id="lista" class="divide-y divide-white/5">
+                    </ul>
+            </div>
+            
+            <div class="mt-4 text-center">
+                 <p class="text-zinc-600 text-xs">Datos extraídos vía Public Embed Parser</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-8 text-zinc-600 text-xs font-mono">
+        © 2026 MonoBridge Systems. All rights reserved.
+    </footer>
 
     <script>
         async function buscarCanciones() {
@@ -31,15 +98,18 @@
             const btn = document.getElementById('btn');
             const lista = document.getElementById('lista');
             const div = document.getElementById('resultado');
+            const contador = document.getElementById('contador');
 
-            if (!input) return alert("Pega un link primero");
+            if (!input) return; // No alert molesto, simplemente no hace nada
 
-            btn.innerText = "Hackeando...";
+            // Estado de carga elegante
+            btn.innerHTML = '<svg class="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             btn.disabled = true;
             lista.innerHTML = "";
+            div.classList.add('hidden');
+            div.classList.remove('opacity-100');
 
             try {
-                // Llamamos a TU función "backend" que crearemos en el paso 3
                 const resp = await fetch('/api/spotify', {
                     method: 'POST',
                     body: JSON.stringify({ url: input }),
@@ -50,22 +120,31 @@
 
                 if (datos.error) throw new Error(datos.error);
 
-                div.classList.remove('hidden');
-                
-                datos.forEach(track => {
+                // Actualizar contador
+                contador.innerText = `${datos.length} TRACKS`;
+
+                // Renderizar lista con estilo
+                datos.forEach((track, index) => {
                     const li = document.createElement('li');
-                    li.className = "bg-gray-800 p-3 rounded flex justify-between items-center";
+                    li.className = "grid grid-cols-12 p-4 items-center hover:bg-white/5 transition duration-150 group cursor-default";
                     li.innerHTML = `
-                        <span class="font-bold">${track.titulo}</span>
-                        <span class="text-sm text-gray-400">${track.artista}</span>
+                        <div class="col-span-1 text-center text-zinc-600 font-mono text-xs group-hover:text-zinc-400">${index + 1}</div>
+                        <div class="col-span-6 font-medium text-zinc-200 truncate pr-4">${track.titulo}</div>
+                        <div class="col-span-5 text-zinc-400 text-sm truncate">${track.artista}</div>
                     `;
                     lista.appendChild(li);
                 });
 
+                // Mostrar resultados con animación fade-in
+                div.classList.remove('hidden');
+                // Pequeño timeout para permitir que el DOM renderice antes de la opacidad
+                setTimeout(() => div.classList.add('opacity-100'), 50);
+
             } catch (e) {
-                alert("Error: " + e.message);
+                console.error(e);
+                alert("Error al procesar la playlist. Verifica el enlace.");
             } finally {
-                btn.innerText = "Buscar";
+                btn.innerHTML = '<span>Analizar</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
                 btn.disabled = false;
             }
         }
