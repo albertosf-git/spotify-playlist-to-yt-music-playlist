@@ -34,7 +34,6 @@
     </script>
 
     <style>
-        /* Estilos base y scrollbar */
         body { background-color: #09090b; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #09090b; }
@@ -156,11 +155,15 @@
 
                 // 2. Pintar Canciones
                 data.tracks.forEach((track, index) => {
-                    // TRUCO DE REDIRECCIÓN AUTOMÁTICA
-                    // site:youtube.com fuerza que busque vídeos
-                    // !ducky fuerza el "Voy a tener suerte" (primer resultado)
-                    const searchQuery = `site:youtube.com ${track.titulo} ${track.artista} official audio`;
-                    const magicLink = `https://duckduckgo.com/?q=!ducky+${encodeURIComponent(searchQuery)}`;
+                    // TRUCO SUPREMO DE YOUTUBE:
+                    // Usamos el endpoint /embed?listType=search
+                    // Esto abre un reproductor que busca Y reproduce automáticamente el primer resultado.
+                    // Es nativo de YouTube, así que no falla ni redirige raro.
+                    const query = encodeURIComponent(`${track.titulo} ${track.artista} official audio`);
+                    
+                    // Si prefieres la interfaz normal (pero con riesgo de lista), cambia esta línea.
+                    // Pero este link reproduce automáticamente el primer vídeo que encuentra:
+                    const magicLink = `https://www.youtube.com/embed?listType=search&list=${query}&autoplay=1`;
 
                     const li = document.createElement('li');
                     li.className = "grid grid-cols-12 p-4 items-center hover:bg-white/5 transition duration-200 group relative";
@@ -176,7 +179,7 @@
                         
                         <div class="col-span-1 flex justify-center">
                             <a href="${magicLink}" target="_blank" 
-                               class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 hover:bg-white hover:text-black hover:scale-110 hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all duration-300 transform"
+                               class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-white hover:text-red-600 hover:scale-110 shadow-lg shadow-red-900/20 transition-all duration-300 transform"
                                title="Reproducir Automáticamente">
                                 <i class="fa-solid fa-play text-xs ml-0.5"></i>
                             </a>
@@ -187,14 +190,12 @@
 
                 // Mostrar resultado
                 div.classList.remove('hidden');
-                // Scroll suave hacia los resultados
                 div.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
             } catch (e) {
-                alert("Ops! No pudimos leer esa playlist. Asegúrate de que es pública y el enlace es correcto.");
+                alert("Ops! No pudimos leer esa playlist. Asegúrate de que es pública.");
                 console.error(e);
             } finally {
-                // Restaurar botón
                 btn.innerHTML = originalBtnContent;
                 btn.classList.remove('opacity-80', 'cursor-not-allowed');
                 btn.disabled = false;
