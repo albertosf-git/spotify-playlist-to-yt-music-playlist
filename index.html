@@ -37,7 +37,7 @@
         </div>
         <div class="flex items-center gap-2">
             <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">System Online</span>
+            <span class="text-xs font-mono text-zinc-500 uppercase tracking-widest">Online</span>
         </div>
     </header>
 
@@ -45,7 +45,7 @@
         
         <div class="w-full max-w-2xl text-center space-y-8 mb-16">
             <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight leading-tight">
-                Tu música. <span class="text-zinc-600">Directa.</span>
+                Música sin barreras. <br><span class="text-zinc-600">Spotify a YouTube.</span>
             </h2>
             
             <div class="relative group mx-auto w-full">
@@ -82,10 +82,6 @@
     </main>
 
     <script>
-        // INSTANCIA DE INVIDIOUS (API DE YOUTUBE GRATIS)
-        // Si esta falla en el futuro, cambia la URL por otra de: https://api.invidious.io/
-        const API_YOUTUBE_GRATIS = "https://vid.puffyan.us/api/v1/search";
-
         async function procesarPlaylist() {
             const input = document.getElementById('urlInput');
             const btn = document.getElementById('btn');
@@ -107,7 +103,7 @@
             div.classList.add('hidden');
 
             try {
-                // Scraping de Spotify (Backend)
+                // Scraping de Spotify (Backend existente)
                 const resp = await fetch('/api/spotify', {
                     method: 'POST',
                     body: JSON.stringify({ url: input.value }),
@@ -124,14 +120,13 @@
                     const li = document.createElement('li');
                     li.className = "grid grid-cols-12 p-4 items-center hover:bg-white/5 transition duration-200 group";
                     
-                    // Botón con lógica de búsqueda "On Demand"
-                    // No ponemos el href todavía. Al clicar llamaremos a la función mágica.
+                    // BOTÓN SIMPLE: Llama a la función directa
                     li.innerHTML = `
                         <div class="col-span-1 text-center text-zinc-600 font-mono text-xs group-hover:text-white">${index + 1}</div>
                         <div class="col-span-6 font-medium text-zinc-200 truncate pr-4 text-base">${track.titulo}</div>
                         <div class="col-span-4 text-zinc-400 text-sm truncate pr-4 group-hover:text-zinc-300">${track.artista}</div>
                         <div class="col-span-1 flex justify-center">
-                            <button onclick="abrirYoutube(this, '${track.titulo}', '${track.artista}')" 
+                            <button onclick="abrirGoogleLucky('${track.titulo}', '${track.artista}')" 
                                class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-white hover:text-red-600 hover:scale-110 shadow-lg transition-all duration-300">
                                 <i class="fa-solid fa-play text-xs ml-0.5"></i>
                             </button>
@@ -143,47 +138,23 @@
                 div.classList.remove('hidden');
 
             } catch (e) {
-                alert("Error al leer la playlist: " + e.message);
+                alert("Error al leer la playlist. Verifica el enlace.");
             } finally {
                 btn.innerHTML = originalBtnContent;
                 btn.disabled = false;
             }
         }
 
-        // LA MAGIA: Busca el ID real en el momento del clic
-        async function abrirYoutube(boton, titulo, artista) {
-            const iconoOriginal = boton.innerHTML;
+        // --- LA FUNCIÓN DE GOOGLE LUCKY ---
+        function abrirGoogleLucky(titulo, artista) {
+            // Construimos la búsqueda restringida a youtube.com
+            const query = `site:youtube.com ${titulo} ${artista}`;
             
-            // 1. Poner icono de carga en el botón pequeño
-            boton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-xs"></i>';
-            boton.disabled = true;
-
-            try {
-                const query = `${titulo} ${artista} official audio`;
-                
-                // 2. Preguntar a la API gratuita por el ID del vídeo
-                const respuesta = await fetch(`${API_YOUTUBE_GRATIS}?q=${encodeURIComponent(query)}`);
-                const datos = await respuesta.json();
-
-                if (datos && datos.length > 0) {
-                    // 3. ¡Tenemos ID! Abrir enlace OFICIAL
-                    const videoId = datos[0].videoId;
-                    window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
-                } else {
-                    // Fallback: Si la API no encuentra nada, usar búsqueda genérica
-                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
-                }
-
-            } catch (error) {
-                console.error("Error buscando ID:", error);
-                // Si falla la API (servidor caído), usamos el "Voy a tener suerte" de Google como respaldo
-                const googleLucky = `https://www.google.com/search?q=site:youtube.com+${encodeURIComponent(titulo + " " + artista)}&btnI`;
-                window.open(googleLucky, '_blank');
-            } finally {
-                // Restaurar botón
-                boton.innerHTML = iconoOriginal;
-                boton.disabled = false;
-            }
+            // Usamos el parámetro btnI (I'm Feeling Lucky)
+            const luckyUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&btnI`;
+            
+            // Abrimos en nueva pestaña
+            window.open(luckyUrl, '_blank');
         }
     </script>
 </body>
